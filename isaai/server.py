@@ -20,28 +20,58 @@ import aiohttp
 import aiohttp.web
 
 
-def create_handler(password):
+def create_handler(password, page_id):
     async def handler(request: aiohttp.web.Request):
         data = await request.post()
-        
-        print(data)
+        content = data["body-plain"]
+
+        await add_to_notion_page(password, page_id, content)
 
     return handler
 
 
-
-async def get_notion_page(password, page_id):
-    url = f"https://api.notion.com/v1/pages/{page_id}"
-    headers = {
-        "accept": "application/json",
-        "Notion-Version": "2022-06-28",
-        "Authorization": f"Bearer {password}"
-    }
-
+async def add_to_notion_page(password, page_id, content):
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers) as resp:
+        url = f"https://api.notion.com/v1/blocks/{page_id}/children"
+        
+        headers = {
+            "accept": "application/json",
+            "Notion-Version": "2022-06-28",
+            "Authorization": f"Bearer {password}"
+        }
+
+        payload = {"children": [
+            {
+                "object": "block",
+                "parent": {
+                    "type": "page_id",
+                    "page_id": page_id
+                },
+                "has_children": False,
+                "archived": False,
+                "type": "paragraph",
+                "paragraph": {
+                    "rich_text": [{
+                    "type": "text",
+                    "text": {
+                        "content": content,
+                    }
+                    }],
+                    "color": "default",
+                    "children":[]
+                }
+            }
+
+        ]}
+
+        async with session.patch(url, json=payload, headers=headers) as resp:
             print(resp.status)
-            print(await resp.text())
+            json = await resp.json()
+
+            try:
+                print(json["message"])
+            except KeyError:
+                pass
 
 
 
@@ -52,9 +82,8 @@ def main():
         password = getpass.getpass()
         keyring.set_password("Notion", "SimonBiggs", password)
 
-    asyncio.run(get_notion_page(password, 'ad816892782d478d9998f700a5c783be'))
-
-    handler = create_handler(password)
+    page_id = 'ad816892782d478d9998f700a5c783be'
+    handler = create_handler(password, page_id)
 
     app = aiohttp.web.Application()
     app.add_routes([aiohttp.web.post('/', handler)])
