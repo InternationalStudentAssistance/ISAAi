@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import getpass
-import keyring
 import asyncio
+import getpass
 
 import aiohttp
 import aiohttp.web
+import keyring
 
 
 def create_handler(password, page_id):
@@ -27,7 +27,7 @@ def create_handler(password, page_id):
 
         await add_to_notion_page(password, page_id, content)
 
-        return aiohttp.web.Response(text='OK')
+        return aiohttp.web.Response(text="OK")
 
     return handler
 
@@ -35,36 +35,36 @@ def create_handler(password, page_id):
 async def add_to_notion_page(password, page_id, content):
     async with aiohttp.ClientSession() as session:
         url = f"https://api.notion.com/v1/blocks/{page_id}/children"
-        
+
         headers = {
             "accept": "application/json",
             "Notion-Version": "2022-06-28",
-            "Authorization": f"Bearer {password}"
+            "Authorization": f"Bearer {password}",
         }
 
-        payload = {"children": [
-            {
-                "object": "block",
-                "parent": {
-                    "type": "page_id",
-                    "page_id": page_id
-                },
-                "has_children": False,
-                "archived": False,
-                "type": "paragraph",
-                "paragraph": {
-                    "rich_text": [{
-                    "type": "text",
-                    "text": {
-                        "content": content,
-                    }
-                    }],
-                    "color": "default",
-                    "children":[]
+        payload = {
+            "children": [
+                {
+                    "object": "block",
+                    "parent": {"type": "page_id", "page_id": page_id},
+                    "has_children": False,
+                    "archived": False,
+                    "type": "paragraph",
+                    "paragraph": {
+                        "rich_text": [
+                            {
+                                "type": "text",
+                                "text": {
+                                    "content": content,
+                                },
+                            }
+                        ],
+                        "color": "default",
+                        "children": [],
+                    },
                 }
-            }
-
-        ]}
+            ]
+        }
 
         async with session.patch(url, json=payload, headers=headers) as resp:
             print(resp.status)
@@ -83,9 +83,9 @@ def main():
         password = getpass.getpass()
         keyring.set_password("Notion", "SimonBiggs", password)
 
-    page_id = 'ad816892782d478d9998f700a5c783be'
+    page_id = "ad816892782d478d9998f700a5c783be"
     handler = create_handler(password, page_id)
 
     app = aiohttp.web.Application()
-    app.add_routes([aiohttp.web.post('/', handler)])
+    app.add_routes([aiohttp.web.post("/", handler)])
     aiohttp.web.run_app(app)
