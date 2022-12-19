@@ -73,6 +73,7 @@ async def add_to_notion_page(password, page_id, content):
             except KeyError:
                 pass
 
+        return aiohttp.web.Response(text='OK')
 
 
 def main():
