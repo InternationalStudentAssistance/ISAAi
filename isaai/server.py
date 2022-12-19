@@ -27,6 +27,8 @@ def create_handler(password, page_id):
 
         await add_to_notion_page(password, page_id, content)
 
+        return aiohttp.web.Response(text='OK')
+
     return handler
 
 
@@ -72,8 +74,6 @@ async def add_to_notion_page(password, page_id, content):
                 print(json["message"])
             except KeyError:
                 pass
-
-        return aiohttp.web.Response(text='OK')
 
 
 def main():
